@@ -226,10 +226,12 @@ evalStr = ''
 dg_comment = ''
 
 ERP_source_systems = ['CABS','KENANFX','PPP','ZUORA','MBS','SAP','ENS','LATIS']
+CRIS_SOURCE_SYSTEMS = ['CRISC', 'CRISE', 'CRISW']
 
 allTickets = []
 latestRqstrCommentDict = {}
 latestTeamCommentDict = {}
+
 
 
 
@@ -4535,6 +4537,26 @@ def createActionStr(conditions: list) -> str:
         evalStr = 'Root Cause is Corporate Action and Requestor is in BAC Team'
         dg_comment = 'Mapped'
 
+    
+    if three_month_revenue != 0:
+        if (crrnt_cust_assngmnt_grp != rqstd_cust_assngmnt_grp):
+            if (crrnt_cust_extrnl_rprting_BU == rqstd_cust_extrnl_rprting_BU):
+                if evalStr:
+                    evalStr = 'Revenue impact, crossing Assignment Groups only, ' + evalStr
+                else:
+                    evalStr = 'Revenue impact, crossing Assignment Groups only'
+                actionStr = 'Hold for Quarterly Review'
+                dg_comment = 'This request must be held for Quarterly Review.'
+            else:
+                if evalStr:
+                    evalStr = 'Revenue impact, crossing Assignment Groups and Business Units, ' + evalStr
+                else:
+                    evalStr = 'Revenue impact, crossing Assignment Groups and Business Units'
+                actionStr = 'Hold for Annual Review'
+                dg_comment = 'This request must be held for Annual Review.'
+
+
+
     if three_month_revenue == 0 and fan not in arDataResultsList and rqstd_cust_nbr not in placeholder_customers:
         actionStr = 'Auto-Map'
         if evalStr:
@@ -4675,12 +4697,13 @@ def createActionStr(conditions: list) -> str:
 
 
     if ban_source_system not in ERP_source_systems:
+        source_sys_fix = 'CRIS' if ban_source_system in CRIS_SOURCE_SYSTEMS else ban_source_system
         actionStr = 'Auto-Deny'
         if evalStr:
             evalStr += f', {ban_source_system} billing accounts not in ERP'
         else:
-            evalStr = f'{ban_source_system} billing accounts not in ERP'
-        dg_comment = f"Denied: {ban_source_system} billing accounts are not in ERP; therefore, their movement is not governed."
+            evalStr = f'{source_sys_fix} billing accounts not in ERP'
+        dg_comment = f"Denied: {source_sys_fix} billing accounts are not in ERP; therefore, their movement is not governed."
 
 
     if ticket_id in latestRqstrCommentDict:
@@ -4702,21 +4725,6 @@ def createActionStr(conditions: list) -> str:
         dg_comment = 'The billing account does not exist in MDM and therefore cannot be moved from its current customer.'
 
 
-    if three_month_revenue != 0:
-        if (crrnt_cust_assngmnt_grp != rqstd_cust_assngmnt_grp) and (crrnt_cust_extrnl_rprting_BU == rqstd_cust_extrnl_rprting_BU):
-            if evalStr:
-                evalStr = 'Revenue impact, crossing Assignment Groups only, ' + evalStr
-            else:
-                evalStr = 'Revenue impact, crossing Assignment Groups only'
-            actionStr = 'Hold for Quarterly Review'
-            dg_comment = 'This request must be held for Quarterly Review.'
-        elif (crrnt_cust_assngmnt_grp != rqstd_cust_assngmnt_grp) and (crrnt_cust_extrnl_rprting_BU != rqstd_cust_extrnl_rprting_BU):
-            if evalStr:
-                evalStr = 'Revenue impact, crossing Assignment Groups and Business Units, ' + evalStr
-            else:
-                evalStr = 'Revenue impact, crossing Assignment Groups and Business Units'
-            actionStr = 'Hold for Annual Review'
-            dg_comment = 'This request must be held for Annual Review.'
 
     
     print("\n\nhere is the dg_comment: ", dg_comment)
